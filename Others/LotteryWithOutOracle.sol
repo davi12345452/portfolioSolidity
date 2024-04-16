@@ -14,6 +14,7 @@ contract Lottery {
         players.push(payable(msg.sender));
     }
 
+    // O ideal seria utilizar um Oracle, uma Chainlink por exemplo
     function random() private view returns (uint256) {
         return uint256(keccak256(abi.encodePacked(block.prevrandao, block.timestamp, players.length)));
     }

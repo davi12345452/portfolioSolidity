@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 
 contract SimpleToken is ERC1155, Ownable {
-    constructor() ERC1155("") {}
+    constructor() ERC1155("") Ownable(msg.sender) {}
 
     function setURI(string memory newuri) public onlyOwner {
         _setURI(newuri);

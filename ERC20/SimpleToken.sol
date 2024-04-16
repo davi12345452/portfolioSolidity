@@ -4,25 +4,35 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
+/**
+ * Este é um contrato um pouco mais complexo de ERC20 que permite maior arbitragem do Owner do contrato, além
+ * de compras do token por outros usuários.
+ */
 contract SimpleToken is ERC20, Ownable {
-    uint256 private _maxSupply;
-    uint256 private _totalMinted;
-    uint256 private _tokenPrice;
+    uint256 private maxSupply;
+    uint256 private totalMinted;
+    uint256 private tokenPrice;
 
     mapping(address => uint256) private _balances;
     mapping(address => mapping(address => uint256)) private _allowances;
 
-    constructor(uint256 initialSupply, uint256 maxSupply, uint256 tokenPrice) ERC20("MyToken", "MTK") {
-        require(initialSupply <= maxSupply, "Initial supply cannot exceed max supply");
-        _maxSupply = maxSupply;
-        _totalMinted = initialSupply;
-        _tokenPrice = tokenPrice;
-        _mint(msg.sender, initialSupply);
+    constructor(
+        uint256 initialSupply_,
+        uint256 maxSupply_,
+        uint256 tokenPrice_
+    ) ERC20("MyToken", "MTK")
+      Ownable(msg.sender) 
+    {
+        maxSupply = maxSupply_;
+        require(initialSupply_ <= maxSupply, "Initial supply cannot exceed max supply");
+        totalMinted = initialSupply_;
+        tokenPrice = tokenPrice_;
+        _mint(msg.sender, initialSupply_);
     }
 
     function mint(address account, uint256 amount) external onlyOwner {
-        require(_totalMinted + amount <= _maxSupply, "Minting would exceed max supply");
-        _totalMinted += amount;
+        require(totalMinted + amount <= maxSupply, "Minting would exceed max supply");
+        totalMinted += amount;
         _mint(account, amount);
     }
 
@@ -32,36 +42,27 @@ contract SimpleToken is ERC20, Ownable {
 
     function buyTokens() external payable {
         require(msg.value > 0, "Amount must be greater than 0");
-        uint256 amount = msg.value / _tokenPrice;
-        require(_totalMinted + amount <= _maxSupply, "Minting would exceed max supply");
-        _totalMinted += amount;
+        uint256 amount = msg.value / tokenPrice;
+        require(totalMinted + amount <= maxSupply, "Minting would exceed max supply");
+        totalMinted += amount;
         _balances[msg.sender] += amount;
         emit Transfer(address(0), msg.sender, amount);
     }
 
-    function sellTokens(uint256 amount) external {
-        require(_balances[msg.sender] >= amount, "Insufficient balance");
-        _balances[msg.sender] -= amount;
-        _totalMinted -= amount;
-        uint256 etherAmount = amount * _tokenPrice;
-        payable(msg.sender).transfer(etherAmount);
-        emit Transfer(msg.sender, address(0), amount);
-    }
-
     function setTokenPrice(uint256 newPrice) external onlyOwner {
-        _tokenPrice = newPrice;
+        tokenPrice = newPrice;
     }
 
-    function totalMinted() external view returns (uint256) {
-        return _totalMinted;
+    function findTotalMinted() external view returns (uint256) {
+        return totalMinted;
     }
 
-    function maxSupply() external view returns (uint256) {
-        return _maxSupply;
+    function findMaxSupply() external view returns (uint256) {
+        return maxSupply;
     }
 
-    function tokenPrice() external view returns (uint256) {
-        return _tokenPrice;
+    function findTokenPrice() external view returns (uint256) {
+        return tokenPrice;
     }
 
     function balanceOf(address account) public view override returns (uint256) {

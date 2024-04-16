@@ -6,12 +6,16 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
+/**
+ * Este é um contrato bem arbitrário de token ERC20, utilizando Proxy, ou seja, o contrato pode ser modificado.
+ */
 contract ProxySimpleToken is Initializable, ERC20Upgradeable, OwnableUpgradeable, UUPSUpgradeable {
-    /// @custom:oz-upgrades-unsafe-allow constructor
+    // Construtor permite fazer o deploy sem passar os parâmetros de ERC20
     constructor() {
         _disableInitializers();
     }
 
+    // Permitir a iteração somente com endereços autorizados
     mapping(address => bool) public allowedAddress;
 
     modifier onlyAllowed() {
@@ -19,14 +23,19 @@ contract ProxySimpleToken is Initializable, ERC20Upgradeable, OwnableUpgradeable
         _;
     }
 
+    // Inicializa o contrato, basicamento o que o constructor faria
     function initialize() initializer public {
         __ERC20_init("ProxySimpleToken", "PST");
-        __Ownable_init();
+        __Ownable_init(msg.sender);
         __UUPSUpgradeable_init();
     }
 
     function mint(address to, uint256 amount) public onlyOwner {
         _mint(to, amount);
+    }
+
+    function burn(address from, uint256 amount) public onlyOwner {
+        _burn(from, amount);
     }
 
     function setAllowedAddress(address _address, bool _bool) public onlyOwner {
